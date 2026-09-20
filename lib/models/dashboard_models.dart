@@ -168,3 +168,62 @@ class DashboardBooking {
     );
   }
 }
+
+/// The agency dashboard's overview numbers, from GET /agency/stats.
+class AgencyStats {
+  final int tripsTotal;
+  final int tripsUpcoming;
+  final int bookingsTotal;
+  final int bookingsConfirmed;
+  final double revenueTotal;
+  final double? averageRating;
+  final int reviewsCount;
+  final int unreadMessagesCount;
+
+  AgencyStats({
+    required this.tripsTotal,
+    required this.tripsUpcoming,
+    required this.bookingsTotal,
+    required this.bookingsConfirmed,
+    required this.revenueTotal,
+    this.averageRating,
+    required this.reviewsCount,
+    required this.unreadMessagesCount,
+  });
+
+  factory AgencyStats.fromJson(Map<String, dynamic> json) => AgencyStats(
+        tripsTotal: json['trips_total'] as int,
+        tripsUpcoming: json['trips_upcoming'] as int,
+        bookingsTotal: json['bookings_total'] as int,
+        bookingsConfirmed: json['bookings_confirmed'] as int,
+        revenueTotal: double.parse(json['revenue_total'].toString()),
+        averageRating: json['average_rating'] != null ? double.parse(json['average_rating'].toString()) : null,
+        reviewsCount: json['reviews_count'] as int,
+        unreadMessagesCount: json['unread_messages_count'] as int,
+      );
+}
+
+/// One row of the agency's chat inbox — a passenger and their latest message.
+class AgencyConversation {
+  final int passengerId;
+  final String passengerName;
+  final String? lastMessage;
+  final DateTime? lastMessageAt;
+  final int unreadCount;
+
+  AgencyConversation({
+    required this.passengerId,
+    required this.passengerName,
+    this.lastMessage,
+    this.lastMessageAt,
+    required this.unreadCount,
+  });
+
+  factory AgencyConversation.fromJson(Map<String, dynamic> json) => AgencyConversation(
+        passengerId: json['passenger_id'] as int,
+        passengerName: json['passenger_name'] as String? ?? 'Passenger',
+        lastMessage: json['last_message'] as String?,
+        lastMessageAt: json['last_message_at'] != null ? DateTime.parse(json['last_message_at'] as String) : null,
+        unreadCount: json['unread_count'] as int? ?? 0,
+      );
+}

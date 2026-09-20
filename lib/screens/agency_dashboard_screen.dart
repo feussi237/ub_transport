@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
@@ -7,9 +8,14 @@ import '../services/agency_dashboard_service.dart';
 import '../services/auth_service.dart';
 import '../services/api_client.dart';
 import 'sign_up_screen.dart';
+import 'agency_overview_tab.dart';
+import 'agency_messages_tab.dart';
+import 'agency_account_tab.dart';
+import 'scan_ticket_screen.dart';
 
 /// Web dashboard for the `agency_staff` role: manage the agency's buses,
-/// publish/update trips, and see who has booked them.
+/// publish/update trips, see who has booked them, chat with passengers,
+/// scan boarding tickets, and edit the agency's own account.
 class AgencyDashboardScreen extends StatefulWidget {
   const AgencyDashboardScreen({super.key});
 
@@ -30,21 +36,43 @@ class _AgencyDashboardScreenState extends State<AgencyDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('UB Transport — Agency'),
           backgroundColor: AppColors.darkOlive,
           foregroundColor: AppColors.white,
           bottom: const TabBar(
+            isScrollable: true,
             indicatorColor: AppColors.gold,
             labelColor: AppColors.white,
             unselectedLabelColor: AppColors.textOnDark,
-            tabs: [Tab(text: 'Trips'), Tab(text: 'Buses'), Tab(text: 'Bookings')],
+            tabs: [
+              Tab(text: 'Overview'),
+              Tab(text: 'Trips'),
+              Tab(text: 'Buses'),
+              Tab(text: 'Bookings'),
+              Tab(text: 'Messages'),
+              Tab(text: 'Account'),
+            ],
           ),
-          actions: [IconButton(onPressed: _logout, icon: const Icon(Icons.logout))],
+          actions: [
+            IconButton(
+              tooltip: 'Scan ticket',
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanTicketScreen())),
+              icon: const Icon(Icons.qr_code_scanner),
+            ),
+            IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
+          ],
         ),
-        body: const TabBarView(children: [_TripsTab(), _BusesTab(), _BookingsTab()]),
+        body: const TabBarView(children: [
+          AgencyOverviewTab(),
+          _TripsTab(),
+          _BusesTab(),
+          _BookingsTab(),
+          AgencyMessagesTab(),
+          AgencyAccountTab(),
+        ]),
       ),
     );
   }
@@ -324,6 +352,48 @@ class _BusesTabState extends State<_BusesTab> {
     if (created == true) _reload();
   }
 
+  Future<void> _editBus(DashboardBus bus) async {
+    final plateController = TextEditingController(text: bus.plateNumber);
+    String category = bus.category;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit bus'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: plateController, decoration: const InputDecoration(labelText: 'Plate number')),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: category,
+                items: const [
+                  DropdownMenuItem(value: 'standard', child: Text('Standard')),
+                  DropdownMenuItem(value: 'vip', child: Text('VIP')),
+                  DropdownMenuItem(value: 'express', child: Text('Express')),
+                ],
+                onChanged: (v) => setDialogState(() => category = v!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Save')),
+          ],
+        ),
+      ),
+    );
+
+    if (saved != true) return;
+    try {
+      await AgencyDashboardService.instance.updateBus(bus.id, plateNumber: plateController.text.trim(), category: category);
+      _reload();
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -353,7 +423,10 @@ class _BusesTabState extends State<_BusesTab> {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final bus = buses[index];
-              return Container(
+              return InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => _editBus(bus),
+                child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
                 child: Row(
@@ -366,8 +439,9 @@ class _BusesTabState extends State<_BusesTab> {
                         Text('${bus.category} • ${bus.seatCount} seats', style: AppTextStyles.subtitle),
                       ],
                     ),
-                    const Icon(Icons.directions_bus, color: AppColors.textMuted),
+                    const Icon(Icons.edit_outlined, color: AppColors.textMuted),
                   ],
+                ),
                 ),
               );
             },
@@ -481,17 +555,40 @@ class _BookingsTab extends StatefulWidget {
 }
 
 class _BookingsTabState extends State<_BookingsTab> {
+  static const _pollInterval = Duration(seconds: 10);
+
   late Future<List<DashboardBooking>> _future;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _future = AgencyDashboardService.instance.listBookings();
+    _pollTimer = Timer.periodic(_pollInterval, (_) => _refresh());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    final future = AgencyDashboardService.instance.listBookings();
+    setState(() => _future = future);
+    try {
+      await future;
+    } catch (_) {
+      // Silent on background polling failures.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<DashboardBooking>>(
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: FutureBuilder<List<DashboardBooking>>(
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -535,6 +632,7 @@ class _BookingsTabState extends State<_BookingsTab> {
           },
         );
       },
+      ),
     );
   }
 }

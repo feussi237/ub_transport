@@ -51,4 +51,24 @@ class AuthTest extends TestCase
     {
         $this->getJson('/api/me')->assertStatus(401);
     }
+
+    public function test_a_user_can_update_their_own_profile(): void
+    {
+        $user = $this->makePassenger(['name' => 'Old Name']);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson('/api/me', ['name' => 'New Name', 'phone' => '+237699999999'])
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'New Name', 'phone' => '+237699999999']);
+    }
+
+    public function test_a_user_cannot_take_someone_elses_email_when_updating_profile(): void
+    {
+        $this->makePassenger(['email' => 'taken@example.com']);
+        $me = $this->makePassenger(['email' => 'me@example.com']);
+
+        $this->actingAs($me, 'sanctum')
+            ->patchJson('/api/me', ['email' => 'taken@example.com'])
+            ->assertStatus(422);
+    }
 }

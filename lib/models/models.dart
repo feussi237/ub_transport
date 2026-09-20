@@ -50,21 +50,27 @@ String formatDate(DateTime dt) {
 }
 
 /// Status of an individual bus seat.
-enum SeatStatus { available, selected, booked }
+enum SeatStatus { available, selected, booked, locked }
 
 /// A single seat on the trip's seat map, keyed by the backend's trip_seat id
 /// (not a display index — real buses don't necessarily number seats 1..N).
 class BusSeat {
   final int tripSeatId;
   final String label; // e.g. "12A"
+  final String seatType; // standard | vip
   SeatStatus status;
 
-  BusSeat({required this.tripSeatId, required this.label, this.status = SeatStatus.available});
+  BusSeat({required this.tripSeatId, required this.label, this.seatType = 'standard', this.status = SeatStatus.available});
 
   factory BusSeat.fromApi(ApiTripSeat seat) => BusSeat(
         tripSeatId: seat.id,
         label: seat.seatNumber,
-        status: seat.status == 'available' ? SeatStatus.available : SeatStatus.booked,
+        seatType: seat.seatType,
+        status: switch (seat.status) {
+          'booked' => SeatStatus.booked,
+          'locked' => SeatStatus.locked,
+          _ => SeatStatus.available,
+        },
       );
 }
 

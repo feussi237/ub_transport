@@ -47,7 +47,23 @@ class TripController extends Controller
             $query->where('price', '<=', $request->float('max_price'));
         }
 
-        return $query->orderBy('departure_at')->paginate(20);
+        $paginator = $query->orderBy('departure_at')->paginate(20);
+        $response = $paginator->toArray();
+
+        // Exact route+date search came up empty — offer whatever else is
+        // running that same day so the passenger isn't left with nothing.
+        if ($paginator->isEmpty() && $request->filled('date') && ($request->filled('origin_city') || $request->filled('destination_city'))) {
+            $response['same_day_alternatives'] = Trip::query()
+                ->with(['agency:id,name', 'bus:id,category,plate_number'])
+                ->withCount(['tripSeats as available_seats_count' => fn ($q) => $q->where('status', 'available')])
+                ->where('status', '!=', Trip::STATUS_CANCELLED)
+                ->whereDate('departure_at', $request->date('date'))
+                ->orderBy('departure_at')
+                ->limit(6)
+                ->get();
+        }
+
+        return response()->json($response);
     }
 
     public function show(Trip $trip)

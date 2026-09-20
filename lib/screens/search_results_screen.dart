@@ -25,21 +25,16 @@ class SearchResultsScreen extends StatefulWidget {
 }
 
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
-  late Future<List<BusTrip>> _tripsFuture;
+  late Future<TripSearchResult> _resultFuture;
 
   @override
   void initState() {
     super.initState();
-    _tripsFuture = _load();
-  }
-
-  Future<List<BusTrip>> _load() async {
-    final trips = await TripService.instance.search(
+    _resultFuture = TripService.instance.searchWithAlternatives(
       originCity: widget.origin,
       destinationCity: widget.destination,
       date: widget.date,
     );
-    return trips.map(BusTrip.fromApi).toList();
   }
 
   @override
@@ -49,8 +44,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         title: '${widget.origin} → ${widget.destination}',
         subtitle: '${formatDate(widget.date)} • ${widget.passengers} passenger(s)',
       ),
-      body: FutureBuilder<List<BusTrip>>(
-        future: _tripsFuture,
+      body: FutureBuilder<TripSearchResult>(
+        future: _resultFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
@@ -61,11 +56,27 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 : 'Could not load trips. Check your connection and try again.';
             return _StateMessage(icon: Icons.wifi_off, message: message);
           }
-          final trips = snapshot.data!;
+          final result = snapshot.data!;
+          final trips = result.trips.map(BusTrip.fromApi).toList();
           if (trips.isEmpty) {
-            return const _StateMessage(
-              icon: Icons.directions_bus_outlined,
-              message: 'No trips found for this route and date yet.',
+            final alternatives = result.sameDayAlternatives.map(BusTrip.fromApi).toList();
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              children: [
+                const _StateMessage(
+                  icon: Icons.directions_bus_outlined,
+                  message: 'No trips found on this route and date yet.',
+                ),
+                if (alternatives.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text('Other trips running that day', style: AppTextStyles.label),
+                  const SizedBox(height: 12),
+                  ...alternatives.map((t) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _TripCard(trip: t, passengers: widget.passengers),
+                      )),
+                ],
+              ],
             );
           }
           return ListView.separated(

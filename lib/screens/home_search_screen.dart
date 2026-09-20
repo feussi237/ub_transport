@@ -3,7 +3,10 @@ import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/common_widgets.dart';
 import '../services/auth_service.dart';
+import '../services/trip_service.dart';
 import 'search_results_screen.dart';
+import 'all_trips_screen.dart';
+import 'seat_selection_screen.dart';
 import 'sign_up_screen.dart';
 
 const List<String> kCameroonCities = [
@@ -24,22 +27,24 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   DateTime departureDate = DateTime.now().add(const Duration(days: 1));
   int passengers = 1;
 
-  final List<PopularRoute> _popularRoutes = const [
-    PopularRoute(
-      imageUrl: 'city_skyline',
-      origin: 'Douala',
-      destination: 'Yaoundé',
-      duration: '3h 30m',
-      priceFcfa: 12000,
-    ),
-    PopularRoute(
-      imageUrl: 'colonial_building',
-      origin: 'Yaoundé',
-      destination: 'Bamenda',
-      duration: '6h 00m',
-      priceFcfa: 18000,
-    ),
-  ];
+  late Future<List<BusTrip>> _popularTripsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _popularTripsFuture = _loadPopularTrips();
+  }
+
+  Future<List<BusTrip>> _loadPopularTrips() async {
+    final trips = await TripService.instance.browseUpcoming();
+    return trips.take(8).map(BusTrip.fromApi).toList();
+  }
+
+  void _openTrip(BusTrip trip) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => SeatSelectionScreen(trip: trip, passengerCount: passengers)),
+    );
+  }
 
   Future<void> _showAccountMenu(BuildContext context) async {
     final user = AuthService.instance.currentUser;
@@ -199,7 +204,9 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                 children: [
                   const Text('Popular Routes', style: AppTextStyles.h2),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => AllTripsScreen(passengers: passengers)),
+                    ),
                     child: const Text('See All',
                         style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w700)),
                   ),
@@ -208,13 +215,30 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
             ),
             SizedBox(
               height: 190,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: _popularRoutes.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 14),
-                itemBuilder: (context, index) =>
-                    _PopularRouteCard(route: _popularRoutes[index]),
+              child: FutureBuilder<List<BusTrip>>(
+                future: _popularTripsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final trips = snapshot.data ?? const [];
+                  if (snapshot.hasError || trips.isEmpty) {
+                    return Center(
+                      child: Text(
+                        snapshot.hasError ? 'Could not load trips right now.' : 'No upcoming trips yet.',
+                        style: AppTextStyles.subtitle,
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: trips.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                    itemBuilder: (context, index) =>
+                        _PopularRouteCard(trip: trips[index], onTap: () => _openTrip(trips[index])),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 24),
@@ -441,52 +465,68 @@ class _MiniInfoTile extends StatelessWidget {
 }
 
 class _PopularRouteCard extends StatelessWidget {
-  final PopularRoute route;
+  final BusTrip trip;
+  final VoidCallback onTap;
 
-  const _PopularRouteCard({required this.route});
+  const _PopularRouteCard({required this.trip, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 170,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 100,
-            width: double.infinity,
-            color: AppColors.chipFill,
-            child: const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 32),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('${route.origin} → ${route.destination}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(route.duration,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    Text(formatFcfa(route.priceFcfa),
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary)),
-                  ],
-                ),
-              ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        width: 170,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 100,
+              width: double.infinity,
+              color: AppColors.chipFill,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.directions_bus, color: AppColors.textSecondary, size: 28),
+                  const SizedBox(height: 6),
+                  Text(trip.agencyName, style: AppTextStyles.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${trip.origin} → ${trip.destination}',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('${formatDate(trip.departureAt)} · ${trip.departureTime}',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(formatFcfa(trip.priceFcfa),
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

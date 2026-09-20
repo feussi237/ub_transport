@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../models/api_models.dart';
 import '../widgets/common_widgets.dart';
 import '../services/booking_service.dart';
+import '../services/agency_service.dart';
 import '../services/api_client.dart';
 import 'reviews_screen.dart';
 import 'messages_screen.dart';
@@ -22,11 +23,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   late ApiBooking _booking;
   bool _cancelling = false;
   String? _error;
+  ApiAgency? _agency;
 
   @override
   void initState() {
     super.initState();
     _booking = widget.booking;
+    _loadAgency();
+  }
+
+  Future<void> _loadAgency() async {
+    if (_booking.agencyId == null) return;
+    try {
+      final agency = await AgencyService.instance.getAgency(_booking.agencyId!);
+      if (mounted) setState(() => _agency = agency);
+    } catch (_) {
+      // The ticket still works without the agency's rating — fail quietly.
+    }
   }
 
   bool get _canCancel => _booking.status != 'cancelled' && !_booking.isCompleted;
@@ -89,7 +102,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _TicketCard(booking: b),
+            _TicketCard(booking: b, agency: _agency),
             const SizedBox(height: 20),
             if (_error != null) ...[
               Text(_error!, style: const TextStyle(color: AppColors.danger)),
@@ -139,8 +152,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
 class _TicketCard extends StatelessWidget {
   final ApiBooking booking;
+  final ApiAgency? agency;
 
-  const _TicketCard({required this.booking});
+  const _TicketCard({required this.booking, this.agency});
 
   @override
   Widget build(BuildContext context) {
@@ -158,8 +172,32 @@ class _TicketCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(color: AppColors.chipFill, borderRadius: BorderRadius.circular(10)),
-                child: Text('#${booking.tripId}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                child: Text('Trip #${booking.tripId}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
               ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  agency?.name ?? booking.agencyName ?? '',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (agency?.averageRating != null)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.star, size: 15, color: AppColors.goldDark),
+                    const SizedBox(width: 3),
+                    Text(agency!.averageRating!.toStringAsFixed(1),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: 18),

@@ -26,6 +26,9 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Agency dashboard: scans a passenger's boarding QR code. -->
+	<key>NSCameraUsageDescription</key>
+	<string>UB Transport uses the camera to scan boarding tickets.</string>
 	<!-- Allows plain HTTP to the local dev backend (see ApiClient.baseUrl).
 	     Remove once the API is deployed behind HTTPS. -->
 	<key>NSAppTransportSecurity</key>

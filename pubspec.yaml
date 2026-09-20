@@ -41,6 +41,8 @@ dependencies:
   shared_preferences: ^2.5.5
   # Renders the boarding QR code on the confirmation screen.
   qr_flutter: ^4.1.0
+  # Scans a passenger's boarding QR code from the agency dashboard.
+  mobile_scanner: ^5.0.0
 
 dev_dependencies:
   flutter_test:

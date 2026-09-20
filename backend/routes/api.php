@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AgencyController as AdminAgencyController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\AgencyController;
+use App\Http\Controllers\Api\AgencyStatsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BusController;
@@ -30,6 +31,7 @@ Route::get('/agencies/{agency}/reviews', [ReviewController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/me', [AuthController::class, 'updateProfile']);
 
     Route::get('/messages', [MessageController::class, 'index']);
     Route::post('/messages', [MessageController::class, 'store']);
@@ -52,9 +54,12 @@ Route::middleware(['auth:sanctum', 'role:'.Role::PASSENGER])->group(function () 
 
 // --- Agency staff ---------------------------------------------------------
 Route::middleware(['auth:sanctum', 'role:'.Role::AGENCY_STAFF])->prefix('agency')->group(function () {
+    Route::patch('/profile', [AgencyController::class, 'updateOwnProfile']);
+
     Route::get('/buses', [BusController::class, 'index']);
     Route::post('/buses', [BusController::class, 'store']);
     Route::get('/buses/{bus}', [BusController::class, 'show']);
+    Route::patch('/buses/{bus}', [BusController::class, 'update']);
 
     Route::post('/trips', [TripController::class, 'store']);
     Route::get('/trips', [TripController::class, 'agencyIndex']);
@@ -63,6 +68,9 @@ Route::middleware(['auth:sanctum', 'role:'.Role::AGENCY_STAFF])->prefix('agency'
     Route::get('/bookings', [BookingController::class, 'agencyBookings']);
 
     Route::post('/tickets/validate', [TicketController::class, 'validateBoarding']);
+
+    Route::get('/stats', [AgencyStatsController::class, 'index']);
+    Route::get('/conversations', [MessageController::class, 'agencyConversations']);
 });
 
 // --- Admin ---------------------------------------------------------------

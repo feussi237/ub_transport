@@ -49,6 +49,18 @@ class AuthService {
     currentUser = ApiUser.fromJson(json['user'] as Map<String, dynamic>);
   }
 
+  /// Edits the signed-in user's own name/email/phone/password. Any field
+  /// left null is left untouched server-side.
+  Future<void> updateProfile({String? name, String? email, String? phone, String? password}) async {
+    final json = await _client.patch('/me', {
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
+      if (password != null) 'password': password,
+    });
+    currentUser = ApiUser.fromJson(json as Map<String, dynamic>);
+  }
+
   Future<void> logout() async {
     try {
       await _client.post('/auth/logout');

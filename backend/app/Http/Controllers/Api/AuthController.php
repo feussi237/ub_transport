@@ -132,4 +132,21 @@ class AuthController extends Controller
     {
         return $request->user()->load('role', 'agencyStaff.agency');
     }
+
+    /** Lets the signed-in user (any role) edit their own name/email/phone/password. */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['sometimes', 'string', Rule::unique('users', 'phone')->ignore($user->id)],
+            'password' => ['sometimes', 'string', 'min:8'],
+        ]);
+
+        $user->update($data);
+
+        return $user->load('role', 'agencyStaff.agency');
+    }
 }

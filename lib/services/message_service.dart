@@ -1,4 +1,5 @@
 import '../models/api_models.dart';
+import '../models/dashboard_models.dart';
 import 'api_client.dart';
 
 class MessageService {
@@ -26,5 +27,13 @@ class MessageService {
       if (tripId != null) 'trip_id': tripId,
     });
     return ApiMessage.fromJson(json as Map<String, dynamic>);
+  }
+
+  /// The agency dashboard's chat inbox: one row per passenger who has
+  /// messaged the agency, most recently active first.
+  Future<List<AgencyConversation>> agencyConversations() async {
+    final json = await _client.get('/agency/conversations');
+    final data = json as List<dynamic>;
+    return data.map((e) => AgencyConversation.fromJson(e as Map<String, dynamic>)).toList();
   }
 }

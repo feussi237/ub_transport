@@ -7,16 +7,31 @@ class ApiUser {
   final String email;
   final String phone;
   final String role; // admin | agency_staff | passenger
+  final String? agencyContactPhone;
+  final String? agencyContactEmail;
 
-  ApiUser({required this.id, required this.name, required this.email, required this.phone, required this.role});
+  ApiUser({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.role,
+    this.agencyContactPhone,
+    this.agencyContactEmail,
+  });
 
-  factory ApiUser.fromJson(Map<String, dynamic> json) => ApiUser(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        email: json['email'] as String,
-        phone: json['phone'] as String,
-        role: (json['role'] as Map<String, dynamic>?)?['name'] as String? ?? 'passenger',
-      );
+  factory ApiUser.fromJson(Map<String, dynamic> json) {
+    final agency = (json['agency_staff'] as Map<String, dynamic>?)?['agency'] as Map<String, dynamic>?;
+    return ApiUser(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      email: json['email'] as String,
+      phone: json['phone'] as String,
+      role: (json['role'] as Map<String, dynamic>?)?['name'] as String? ?? 'passenger',
+      agencyContactPhone: agency?['contact_phone'] as String?,
+      agencyContactEmail: agency?['contact_email'] as String?,
+    );
+  }
 }
 
 class ApiTripSeat {
@@ -185,6 +200,7 @@ class ApiAgency {
   final String? contactPhone;
   final String? contactEmail;
   final int reviewsCount;
+  final double? averageRating;
   final int? contactUserId;
 
   ApiAgency({
@@ -194,6 +210,7 @@ class ApiAgency {
     this.contactPhone,
     this.contactEmail,
     this.reviewsCount = 0,
+    this.averageRating,
     this.contactUserId,
   });
 
@@ -204,6 +221,7 @@ class ApiAgency {
         contactPhone: json['contact_phone'] as String?,
         contactEmail: json['contact_email'] as String?,
         reviewsCount: json['reviews_count'] as int? ?? 0,
+        averageRating: json['average_rating'] != null ? double.parse(json['average_rating'].toString()) : null,
         contactUserId: json['contact_user_id'] as int?,
       );
 }

@@ -20,6 +20,24 @@ class BookingFlowTest extends TestCase
             ->assertJsonCount(1, 'data');
     }
 
+    public function test_search_offers_same_day_alternatives_when_the_exact_route_has_no_trips(): void
+    {
+        ['trip' => $trip] = $this->makeAgencyWithTrip([
+            'origin_city' => 'Douala',
+            'destination_city' => 'Kribi',
+            'departure_at' => now()->addDay()->setTime(9, 0),
+        ]);
+
+        $response = $this->getJson('/api/trips?origin_city=Douala&destination_city=Yaoundé&date='.$trip->departure_at->toDateString())
+            ->assertOk()
+            ->json();
+
+        $this->assertCount(0, $response['data']);
+        $this->assertArrayHasKey('same_day_alternatives', $response);
+        $this->assertCount(1, $response['same_day_alternatives']);
+        $this->assertSame('Kribi', $response['same_day_alternatives'][0]['destination_city']);
+    }
+
     public function test_a_passenger_can_book_pay_and_receive_a_ticket(): void
     {
         ['trip' => $trip, 'tripSeats' => $tripSeats] = $this->makeAgencyWithTrip();

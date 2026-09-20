@@ -26,6 +26,26 @@ class AgencyDashboardService {
     return DashboardBus.fromJson(json as Map<String, dynamic>);
   }
 
+  Future<void> updateBus(int busId, {String? plateNumber, String? category}) =>
+      _client.patch('/agency/buses/$busId', {
+        if (plateNumber != null) 'plate_number': plateNumber,
+        if (category != null) 'category': category,
+      });
+
+  Future<DashboardAgency> updateProfile({String? contactPhone, String? contactEmail, String? address}) async {
+    final json = await _client.patch('/agency/profile', {
+      if (contactPhone != null) 'contact_phone': contactPhone,
+      if (contactEmail != null) 'contact_email': contactEmail,
+      if (address != null) 'address': address,
+    });
+    return DashboardAgency.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<AgencyStats> getStats() async {
+    final json = await _client.get('/agency/stats');
+    return AgencyStats.fromJson(json as Map<String, dynamic>);
+  }
+
   Future<List<DashboardTrip>> listTrips() async {
     final json = await _client.get('/agency/trips');
     final data = json['data'] as List<dynamic>;

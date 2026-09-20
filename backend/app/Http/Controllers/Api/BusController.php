@@ -57,6 +57,21 @@ class BusController extends Controller
         return $bus->load('seats');
     }
 
+    /** Agency edits its own bus's plate number/category. Seats are managed at creation time only. */
+    public function update(Request $request, Bus $bus)
+    {
+        $this->authorizeAgencyBus($request, $bus);
+
+        $data = $request->validate([
+            'plate_number' => ['sometimes', 'string', Rule::unique('buses', 'plate_number')->ignore($bus->id)],
+            'category' => ['sometimes', Rule::in(['standard', 'vip', 'express'])],
+        ]);
+
+        $bus->update($data);
+
+        return $bus->load('seats');
+    }
+
     private function authorizeAgencyBus(Request $request, Bus $bus): void
     {
         if ($bus->agency_id !== $this->currentAgency($request)->id) {
