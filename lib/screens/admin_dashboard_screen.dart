@@ -5,11 +5,18 @@ import '../widgets/common_widgets.dart';
 import '../services/admin_service.dart';
 import '../services/auth_service.dart';
 import 'sign_up_screen.dart';
+import 'admin_bookings_tab.dart';
+import 'admin_trips_tab.dart';
+import 'admin_payments_tab.dart';
+import 'admin_settings_tab.dart';
+import 'admin_reports_tab.dart';
+import 'admin_account_tab.dart';
 
 /// Web dashboard for the `admin` role: verify/suspend agencies, adjust their
-/// commission rate, and lock/unlock user accounts. Reuses the same Laravel
-/// API and Flutter codebase as the passenger app — this screen is simply
-/// never reachable from a passenger account.
+/// commission rate, lock/unlock user accounts, manage bookings/trips/
+/// payments, configure platform settings, and view analytics. Reuses the
+/// same Laravel API and Flutter codebase as the passenger app — this screen
+/// is simply never reachable from a passenger account.
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -17,7 +24,28 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
+class _AdminSection {
+  final String label;
+  final IconData icon;
+  final Widget page;
+
+  const _AdminSection({required this.label, required this.icon, required this.page});
+}
+
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  int _index = 0;
+
+  static const _sections = [
+    _AdminSection(label: 'Agencies', icon: Icons.apartment, page: _AgenciesTab()),
+    _AdminSection(label: 'Users', icon: Icons.people_outline, page: _UsersTab()),
+    _AdminSection(label: 'Bookings', icon: Icons.confirmation_number_outlined, page: AdminBookingsTab()),
+    _AdminSection(label: 'Trips', icon: Icons.directions_bus_outlined, page: AdminTripsTab()),
+    _AdminSection(label: 'Payments', icon: Icons.payments_outlined, page: AdminPaymentsTab()),
+    _AdminSection(label: 'Settings', icon: Icons.settings_outlined, page: AdminSettingsTab()),
+    _AdminSection(label: 'Reports', icon: Icons.bar_chart, page: AdminReportsTab()),
+    _AdminSection(label: 'Account', icon: Icons.person_outline, page: AdminAccountTab()),
+  ];
+
   Future<void> _logout() async {
     await AuthService.instance.logout();
     if (!mounted) return;
@@ -29,22 +57,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('UB Transport — Admin'),
-          backgroundColor: AppColors.darkOlive,
-          foregroundColor: AppColors.white,
-          bottom: const TabBar(
-            indicatorColor: AppColors.gold,
-            labelColor: AppColors.white,
-            unselectedLabelColor: AppColors.textOnDark,
-            tabs: [Tab(text: 'Agencies'), Tab(text: 'Users')],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('UB Transport — Admin · ${_sections[_index].label}'),
+        backgroundColor: AppColors.darkOlive,
+        foregroundColor: AppColors.white,
+        actions: [IconButton(onPressed: _logout, icon: const Icon(Icons.logout))],
+      ),
+      body: Row(
+        children: [
+          NavigationRail(
+            extended: MediaQuery.of(context).size.width >= 720,
+            minExtendedWidth: 200,
+            backgroundColor: AppColors.cream,
+            selectedIndex: _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            labelType: MediaQuery.of(context).size.width >= 720 ? null : NavigationRailLabelType.all,
+            selectedIconTheme: const IconThemeData(color: AppColors.darkOlive),
+            selectedLabelTextStyle: const TextStyle(color: AppColors.darkOlive, fontWeight: FontWeight.w700),
+            unselectedLabelTextStyle: const TextStyle(color: AppColors.textSecondary),
+            destinations: _sections
+                .map((s) => NavigationRailDestination(icon: Icon(s.icon), label: Text(s.label)))
+                .toList(),
           ),
-          actions: [IconButton(onPressed: _logout, icon: const Icon(Icons.logout))],
-        ),
-        body: const TabBarView(children: [_AgenciesTab(), _UsersTab()]),
+          const VerticalDivider(width: 1, color: AppColors.border),
+          Expanded(child: IndexedStack(index: _index, children: _sections.map((s) => s.page).toList())),
+        ],
       ),
     );
   }

@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../models/api_models.dart';
@@ -22,8 +25,10 @@ class BookingDetailScreen extends StatefulWidget {
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   late ApiBooking _booking;
   bool _cancelling = false;
+  bool _sharing = false;
   String? _error;
   ApiAgency? _agency;
+  final GlobalKey _ticketKey = GlobalKey();
 
   @override
   void initState() {
@@ -45,6 +50,36 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   bool get _canCancel => _booking.status != 'cancelled' && !_booking.isCompleted;
   bool get _canReview => _booking.isCompleted && _booking.status == 'confirmed';
   bool get _canMessage => _booking.agencyId != null;
+  bool get _canShare => _booking.ticket != null;
+
+  /// Renders the ticket card (already on screen, via [_ticketKey]) to a PNG
+  /// and opens the OS share sheet — the standard mobile way to let someone
+  /// save an image to Photos/Files or send it on (WhatsApp, email, etc.).
+  Future<void> _shareTicket() async {
+    setState(() => _sharing = true);
+    try {
+      final boundary = _ticketKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+      final bytes = byteData.buffer.asUint8List();
+
+      await Share.shareXFiles(
+        [XFile.fromData(bytes, mimeType: 'image/png', name: 'ub-transport-ticket.png')],
+        text: 'My UB Transport ticket — ${_booking.originCity ?? ''} → ${_booking.destinationCity ?? ''}',
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not prepare the ticket for sharing. Try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
 
   Future<void> _cancel() async {
     final confirmed = await showDialog<bool>(
@@ -102,7 +137,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _TicketCard(booking: b, agency: _agency),
+            RepaintBoundary(key: _ticketKey, child: _TicketCard(booking: b, agency: _agency)),
+            const SizedBox(height: 14),
+            if (_canShare)
+              OutlinedButton.icon(
+                onPressed: _sharing ? null : _shareTicket,
+                icon: _sharing
+                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.ios_share),
+                label: Text(_sharing ? 'Preparing…' : 'Download / Share ticket'),
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+              ),
             const SizedBox(height: 20),
             if (_error != null) ...[
               Text(_error!, style: const TextStyle(color: AppColors.danger)),

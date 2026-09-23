@@ -43,6 +43,8 @@ dependencies:
   qr_flutter: ^4.1.0
   # Scans a passenger's boarding QR code from the agency dashboard.
   mobile_scanner: ^5.0.0
+  # Lets a passenger save/share their ticket QR code as an image.
+  share_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:
