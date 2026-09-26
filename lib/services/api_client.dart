@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,14 +22,8 @@ class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();
 
-  // LAN address of the computer running the Laravel API during development.
-  // static String get baseUrl {
-  //   return 'http://10.80.158.243:8000/api';
-  // }
-
   static String get baseUrl {
-    if (!kIsWeb && Platform.isAndroid) return 'http://10.80.158.243:8000/api';
-    return 'http://127.0.0.1:8000/api'; 
+    return 'https://ubtransport-production.up.railway.app/api';
   }
 
   String? _token;
