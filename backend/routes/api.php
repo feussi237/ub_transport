@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AgencyController as AdminAgencyController;
+use App\Http\Controllers\Api\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Api\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Api\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Api\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Api\Admin\TripController as AdminTripController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\AgencyController;
 use App\Http\Controllers\Api\AgencyStatsController;
@@ -83,4 +88,18 @@ Route::middleware(['auth:sanctum', 'role:'.Role::ADMIN])->prefix('admin')->group
     Route::get('/users', [AdminUserController::class, 'index']);
     Route::post('/users/{user}/lock', [AdminUserController::class, 'lock']);
     Route::post('/users/{user}/unlock', [AdminUserController::class, 'unlock']);
+
+    Route::get('/bookings', [AdminBookingController::class, 'index']);
+    Route::post('/bookings/{booking}/suspend', [AdminBookingController::class, 'suspend']);
+
+    Route::get('/trips', [AdminTripController::class, 'index']);
+    Route::patch('/trips/{trip}', [AdminTripController::class, 'update']);
+
+    Route::get('/payments', [AdminPaymentController::class, 'index']);
+    Route::post('/payments/{payment}/refund', [AdminPaymentController::class, 'refund']);
+
+    Route::get('/settings', [AdminSettingController::class, 'index']);
+    Route::patch('/settings', [AdminSettingController::class, 'update']);
+
+    Route::get('/reports', [AdminReportController::class, 'index']);
 });

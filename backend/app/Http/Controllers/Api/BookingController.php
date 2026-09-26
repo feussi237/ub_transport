@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\CancelsBookings;
 use App\Http\Controllers\Concerns\ResolvesAgency;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
@@ -13,6 +14,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class BookingController extends Controller
 {
     use ResolvesAgency;
+    use CancelsBookings;
 
     private const SEAT_LOCK_MINUTES = 5;
 
@@ -94,14 +96,7 @@ class BookingController extends Controller
         $data = $request->validate(['reason' => ['nullable', 'string']]);
         $refundEligible = now()->diffInHours($booking->trip->departure_at, false) >= 24;
 
-        DB::transaction(function () use ($booking, $data) {
-            $booking->update([
-                'status' => Booking::STATUS_CANCELLED,
-                'cancellation_reason' => $data['reason'] ?? null,
-            ]);
-
-            $booking->tripSeat->update(['status' => TripSeat::STATUS_AVAILABLE, 'locked_until' => null]);
-        });
+        $this->releaseBooking($booking, $data['reason'] ?? null);
 
         return response()->json([
             'booking' => $booking,
