@@ -8,7 +8,7 @@ class AdminService {
   final ApiClient _client = ApiClient.instance;
 
   Future<List<DashboardAgency>> listAgencies({String? status}) async {
-    final json = await _client.get('/admin/agencies', query: {if (status != null) 'status': status});
+    final json = await _client.get('/admin/agencies', query: {'status': ?status});
     final data = json['data'] as List<dynamic>;
     return data.map((e) => DashboardAgency.fromJson(e as Map<String, dynamic>)).toList();
   }
@@ -22,7 +22,7 @@ class AdminService {
       _client.patch('/admin/agencies/$agencyId/commission', {'commission_rate': rate});
 
   Future<List<DashboardUser>> listUsers({String? role}) async {
-    final json = await _client.get('/admin/users', query: {if (role != null) 'role': role});
+    final json = await _client.get('/admin/users', query: {'role': ?role});
     final data = json['data'] as List<dynamic>;
     return data.map((e) => DashboardUser.fromJson(e as Map<String, dynamic>)).toList();
   }

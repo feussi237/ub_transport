@@ -112,7 +112,7 @@ class _AgenciesTabState extends State<_AgenciesTab> {
         return ListView.separated(
           padding: const EdgeInsets.all(20),
           itemCount: agencies.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final agency = agencies[index];
             return _DashboardCard(
@@ -187,7 +187,7 @@ class _UsersTabState extends State<_UsersTab> {
         return ListView.separated(
           padding: const EdgeInsets.all(20),
           itemCount: users.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final user = users[index];
             return _DashboardCard(
