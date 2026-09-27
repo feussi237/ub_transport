@@ -116,7 +116,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               title: const Text('Maintenance mode', style: AppTextStyles.label),
               subtitle: const Text('Shows a maintenance notice to passengers when on.', style: AppTextStyles.subtitle),
               value: _maintenanceMode,
-              activeColor: AppColors.gold,
+              activeThumbColor: AppColors.gold,
               onChanged: (v) => setState(() => _maintenanceMode = v),
             ),
             if (_error != null) ...[

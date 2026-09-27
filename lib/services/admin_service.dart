@@ -32,7 +32,7 @@ class AdminService {
   Future<void> unlockUser(int userId) => _client.post('/admin/users/$userId/unlock');
 
   Future<List<DashboardBooking>> listBookings({String? status}) async {
-    final json = await _client.get('/admin/bookings', query: {if (status != null) 'status': status});
+    final json = await _client.get('/admin/bookings', query: {'status': ?status});
     final data = json['data'] as List<dynamic>;
     return data.map((e) => DashboardBooking.fromJson(e as Map<String, dynamic>)).toList();
   }
@@ -41,7 +41,7 @@ class AdminService {
       _client.post('/admin/bookings/$bookingId/suspend', {'reason': reason});
 
   Future<List<DashboardTrip>> listTrips({String? status}) async {
-    final json = await _client.get('/admin/trips', query: {if (status != null) 'status': status});
+    final json = await _client.get('/admin/trips', query: {'status': ?status});
     final data = json['data'] as List<dynamic>;
     return data.map((e) => DashboardTrip.fromJson(e as Map<String, dynamic>)).toList();
   }
@@ -49,7 +49,7 @@ class AdminService {
   Future<void> updateTripStatus(int tripId, String status) => _client.patch('/admin/trips/$tripId', {'status': status});
 
   Future<List<AdminPayment>> listPayments({String? status}) async {
-    final json = await _client.get('/admin/payments', query: {if (status != null) 'status': status});
+    final json = await _client.get('/admin/payments', query: {'status': ?status});
     final data = json['data'] as List<dynamic>;
     return data.map((e) => AdminPayment.fromJson(e as Map<String, dynamic>)).toList();
   }

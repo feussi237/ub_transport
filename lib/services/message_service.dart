@@ -14,7 +14,7 @@ class MessageService {
   Future<List<ApiMessage>> thread(int otherUserId, {int? tripId}) async {
     final json = await _client.get('/messages', query: {
       'with': '$otherUserId',
-      if (tripId != null) 'trip_id': '$tripId',
+      'trip_id': ?tripId?.toString(),
     });
     final data = json as List<dynamic>;
     return data.map((e) => ApiMessage.fromJson(e as Map<String, dynamic>)).toList();
@@ -24,7 +24,7 @@ class MessageService {
     final json = await _client.post('/messages', {
       'receiver_id': receiverId,
       'body': body,
-      if (tripId != null) 'trip_id': tripId,
+      'trip_id': ?tripId,
     });
     return ApiMessage.fromJson(json as Map<String, dynamic>);
   }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../models/models.dart';
 import '../models/dashboard_models.dart';
 import '../widgets/common_widgets.dart';
 import '../services/message_service.dart';
@@ -73,7 +72,7 @@ class _AgencyMessagesTabState extends State<AgencyMessagesTab> {
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: conversations.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final c = conversations[index];
               return InkWell(

@@ -85,7 +85,7 @@ class _AdminPaymentsTabState extends State<AdminPaymentsTab> {
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: payments.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final p = payments[index];
               return Container(

@@ -145,7 +145,7 @@ class _TripsTabState extends State<_TripsTab> {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
             itemCount: trips.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final trip = trips[index];
               return Container(
@@ -420,7 +420,7 @@ class _BusesTabState extends State<_BusesTab> {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
             itemCount: buses.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final bus = buses[index];
               return InkWell(
@@ -604,7 +604,7 @@ class _BookingsTabState extends State<_BookingsTab> {
         return ListView.separated(
           padding: const EdgeInsets.all(20),
           itemCount: bookings.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final b = bookings[index];
             return Container(

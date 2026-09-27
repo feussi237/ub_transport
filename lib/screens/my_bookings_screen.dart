@@ -62,7 +62,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             return ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               itemCount: bookings.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              separatorBuilder: (_, _) => const SizedBox(height: 14),
               itemBuilder: (context, index) => _BookingCard(booking: bookings[index]),
             );
           },

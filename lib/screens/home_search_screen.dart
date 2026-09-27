@@ -234,7 +234,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     scrollDirection: Axis.horizontal,
                     itemCount: trips.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                    separatorBuilder: (_, _) => const SizedBox(width: 14),
                     itemBuilder: (context, index) =>
                         _PopularRouteCard(trip: trips[index], onTap: () => _openTrip(trips[index])),
                   );

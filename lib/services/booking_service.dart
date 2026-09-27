@@ -48,6 +48,6 @@ class BookingService {
   }
 
   Future<void> cancel(int bookingId, {String? reason}) async {
-    await _client.post('/bookings/$bookingId/cancel', {if (reason != null) 'reason': reason});
+    await _client.post('/bookings/$bookingId/cancel', {'reason': ?reason});
   }
 }

@@ -65,7 +65,7 @@ class _PassengerDetailsScreenState extends State<PassengerDetailsScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               itemCount: _passengers.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
+              separatorBuilder: (_, _) => const SizedBox(height: 16),
               itemBuilder: (context, index) => _PassengerCard(
                 index: index,
                 passenger: _passengers[index],

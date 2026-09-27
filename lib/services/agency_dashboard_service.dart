@@ -28,15 +28,15 @@ class AgencyDashboardService {
 
   Future<void> updateBus(int busId, {String? plateNumber, String? category}) =>
       _client.patch('/agency/buses/$busId', {
-        if (plateNumber != null) 'plate_number': plateNumber,
-        if (category != null) 'category': category,
+        'plate_number': ?plateNumber,
+        'category': ?category,
       });
 
   Future<DashboardAgency> updateProfile({String? contactPhone, String? contactEmail, String? address}) async {
     final json = await _client.patch('/agency/profile', {
-      if (contactPhone != null) 'contact_phone': contactPhone,
-      if (contactEmail != null) 'contact_email': contactEmail,
-      if (address != null) 'address': address,
+      'contact_phone': ?contactPhone,
+      'contact_email': ?contactEmail,
+      'address': ?address,
     });
     return DashboardAgency.fromJson(json as Map<String, dynamic>);
   }

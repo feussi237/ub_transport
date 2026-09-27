@@ -45,11 +45,14 @@ class ApiClient {
 
   bool get isAuthenticated => _token != null;
 
-  Map<String, String> get _headers => {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
-      };
+  Map<String, String> get _headers {
+    final bearer = _token == null ? null : 'Bearer $_token';
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': ?bearer,
+    };
+  }
 
   Future<dynamic> get(String path, {Map<String, String>? query}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
