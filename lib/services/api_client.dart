@@ -23,7 +23,7 @@ class ApiClient {
   static final ApiClient instance = ApiClient._();
 
   static String get baseUrl {
-    return 'https://ubtransport-production.up.railway.app/api';
+    return 'http://localhost:8000/api';
   }
 
   String? _token;
