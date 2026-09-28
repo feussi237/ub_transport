@@ -88,7 +88,7 @@ class _AgencyOverviewTabState extends State<AgencyOverviewTab> {
             crossAxisCount: 2,
             mainAxisSpacing: 14,
             crossAxisSpacing: 14,
-            childAspectRatio: 1.35,
+            childAspectRatio: 1.2,
             children: cards,
           );
         },

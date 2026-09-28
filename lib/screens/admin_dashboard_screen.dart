@@ -59,10 +59,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('UB Transport — Admin · ${_sections[_index].label}'),
+        title: Text('UB Transport — Admin · ${_sections[_index].label}',
+        style: TextStyle(color: AppColors.textOnDark),
+        ),
         backgroundColor: AppColors.darkOlive,
         foregroundColor: AppColors.white,
-        actions: [IconButton(onPressed: _logout, icon: const Icon(Icons.logout))],
+        actions: [IconButton(onPressed: _logout, icon: const Icon(Icons.logout, color: AppColors.danger))],
       ),
       body: Row(
         children: [

@@ -64,133 +64,173 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.indigo,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.directions_bus_filled_rounded,
-                    color: Colors.white, size: 28),
+              Row(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.primary,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.directions_bus_filled_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'UB Transport',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Welcome back, traveler!',
+                        style: AppTextStyles.captionSmall,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              const Text('Welcome To UB Transport', style: AppTextStyles.h1),
+              const SizedBox(height: 32),
+              const Text('Sign in to continue', style: AppTextStyles.h1),
               const SizedBox(height: 8),
               const Text(
-                'Plan your next trip, save destinations, and unlock '
-                'exclusive travel perks',
+                'Access your bookings, upcoming trips, and exclusive member deals.',
                 style: AppTextStyles.subtitle,
               ),
               const SizedBox(height: 28),
               if (_error != null) ...[
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.danger.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.dangerLight,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
                   ),
-                  child: Text(_error!,
-                      style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600)),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.error_rounded, color: AppColors.danger, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(
+                            color: AppColors.danger,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
               ],
               LabeledField(
                 label: 'Traveler Email',
-                hint: 'alex@wanderlust.com',
-                prefixIcon: Icons.mail_outline,
+                hint: 'alex@example.com',
+                prefixIcon: Icons.mail_rounded,
                 keyboardType: TextInputType.emailAddress,
                 controller: _emailController,
               ),
               const SizedBox(height: 18),
               LabeledField(
                 label: 'Password',
-                hint: '••••••••••••',
-                prefixIcon: Icons.lock_outline,
+                hint: 'Enter your password',
+                prefixIcon: Icons.lock_rounded,
                 obscureText: _obscurePassword,
                 controller: _passwordController,
                 suffix: IconButton(
                   icon: Icon(
                     _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
                     color: AppColors.textMuted,
-                    size: 20,
+                    size: 22,
                   ),
                   onPressed: () =>
                       setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {},
-                  child: const Text('Forgot password?',
-                      style: TextStyle(color: AppColors.link, fontWeight: FontWeight.w600)),
-                ),
-              ),
-              const SizedBox(height: 14),
-              PrimaryButton(
-                label: _submitting ? 'Signing in…' : 'Login',
-                onPressed: (_formValid && !_submitting) ? _submit : null,
-              ),
-              const SizedBox(height: 20),
-              const Row(
-                children: [
-                  Expanded(child: Divider(color: AppColors.border)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('or continue with', style: AppTextStyles.subtitle),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   ),
-                  Expanded(child: Divider(color: AppColors.border)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.g_mobiledata, size: 26, color: AppColors.danger),
-                label: const Text('Continue with Google', style: AppTextStyles.body),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                  backgroundColor: AppColors.white,
-                  side: BorderSide.none,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Center(
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                  ),
-                  child: RichText(
-                    text: const TextSpan(
-                      style: AppTextStyles.body,
-                      children: [
-                        TextSpan(text: 'New here? '),
-                        TextSpan(
-                          text: 'Create an account',
-                          style: TextStyle(
-                              color: AppColors.link,
-                              fontWeight: FontWeight.w700,
-                              decoration: TextDecoration.underline),
-                        ),
-                      ],
+                  child: const Text(
+                    'Forgot password?',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 8),
+              PrimaryButton(
+                label: _submitting ? 'Signing in…' : 'Sign In',
+                onPressed: (_formValid && !_submitting) ? _submit : null,
+              ),
+              const SizedBox(height: 32),
+              Center(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: RichText(
+                      text: const TextSpan(
+                        style: TextStyle(fontSize: 15),
+                        children: [
+                          TextSpan(
+                            text: "New to UB Transport? ",
+                            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                          ),
+                          TextSpan(
+                            text: 'Create account',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

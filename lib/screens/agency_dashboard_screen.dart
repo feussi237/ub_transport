@@ -39,13 +39,18 @@ class _AgencyDashboardScreenState extends State<AgencyDashboardScreen> {
       length: 6,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('UB Transport — Agency'),
+          title: const Text('UB Transport — Agency',
+          style: TextStyle(color: AppColors.textOnDark),
+          ),
           backgroundColor: AppColors.darkOlive,
           foregroundColor: AppColors.white,
           bottom: const TabBar(
             isScrollable: true,
-            indicatorColor: AppColors.gold,
-            labelColor: AppColors.white,
+            indicator: BoxDecoration(),
+            indicatorColor: Colors.transparent,
+            overlayColor: WidgetStatePropertyAll(Colors.transparent),
+            splashFactory: NoSplash.splashFactory,
+            labelColor: AppColors.gold,
             unselectedLabelColor: AppColors.textOnDark,
             tabs: [
               Tab(text: 'Overview'),
@@ -60,9 +65,13 @@ class _AgencyDashboardScreenState extends State<AgencyDashboardScreen> {
             IconButton(
               tooltip: 'Scan ticket',
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanTicketScreen())),
-              icon: const Icon(Icons.qr_code_scanner),
+              icon: const Icon(Icons.qr_code_scanner,
+              color: AppColors.secondaryDark,),
             ),
-            IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
+            IconButton(onPressed: _logout, 
+            icon: const Icon(Icons.logout,
+            color: AppColors.danger)
+            ),
           ],
         ),
         body: const TabBarView(children: [
@@ -611,16 +620,33 @@ class _BookingsTabState extends State<_BookingsTab> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${b.passengerName}  •  seat ${b.seatNumber}', style: AppTextStyles.label),
-                      Text('${b.originCity} → ${b.destinationCity}  •  ${formatDate(b.departureAt)}', style: AppTextStyles.subtitle),
-                      Text(b.passengerPhone, style: AppTextStyles.subtitle),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${b.passengerName}  •  seat ${b.seatNumber}',
+                          style: AppTextStyles.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${b.originCity} → ${b.destinationCity}  •  ${formatDate(b.departureAt)}',
+                          style: AppTextStyles.subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          b.passengerPhone,
+                          style: AppTextStyles.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
                   Pill(
                     text: b.status,
                     background: (b.status == 'confirmed' ? AppColors.success : AppColors.danger).withValues(alpha: 0.15),

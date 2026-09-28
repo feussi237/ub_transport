@@ -251,94 +251,144 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   Widget _buildHeroCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      decoration: const BoxDecoration(
-        color: AppColors.darkOlive,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+      decoration: BoxDecoration(
+        gradient: AppGradients.hero,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(36),
+          bottomRight: Radius.circular(36),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('WELCOME TO UB TRANSPORT',
-                          style: TextStyle(
-                              color: AppColors.gold,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.6)),
-                      SizedBox(height: 4),
-                      Text('Where is your next trip?',
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text('UB TRANSPORT',
+                                style: TextStyle(
+                                    color: AppColors.secondary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.8)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text('Where is your\nnext adventure?',
                           style: TextStyle(
                               color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800)),
+                              fontSize: 26,
+                              height: 1.15,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2)),
                     ],
                   ),
                 ),
                 GestureDetector(
                   onTap: () => _showAccountMenu(context),
-                  child: const CircleAvatar(
-                    radius: 22,
-                    backgroundColor: AppColors.gold,
-                    child: Icon(Icons.person, color: AppColors.textPrimary),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.secondary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.person_rounded, color: AppColors.primaryDark, size: 26),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
                   _RouteRow(
                     label: 'From (Origin)',
                     value: origin,
-                    leadingColor: AppColors.gold,
+                    leadingColor: AppColors.secondary,
                     onTap: () => _pickCity(isOrigin: true),
                     trailing: InkWell(
                       onTap: _swapOriginDestination,
+                      borderRadius: BorderRadius.circular(18),
                       child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: AppColors.gold,
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          gradient: AppGradients.secondary,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.secondary.withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.swap_vert,
-                            size: 18, color: AppColors.textPrimary),
+                        child: const Icon(Icons.swap_vert_rounded,
+                            size: 20, color: AppColors.primaryDark),
                       ),
                     ),
                   ),
-                  const Divider(height: 22, color: AppColors.border),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(height: 1, color: AppColors.borderLight),
+                  ),
                   _RouteRow(
                     label: 'To (Destination)',
                     value: destination,
-                    leadingColor: AppColors.textSecondary,
+                    leadingColor: AppColors.accent,
                     onTap: () => _pickCity(isOrigin: false),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
                         child: GestureDetector(
                           onTap: _pickDate,
                           child: _MiniInfoTile(
-                            icon: Icons.calendar_today_outlined,
+                            icon: Icons.calendar_today_rounded,
                             label: 'Departure Date',
                             value: formatDate(departureDate),
                           ),
@@ -349,7 +399,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                         child: GestureDetector(
                           onTap: _pickPassengers,
                           child: _MiniInfoTile(
-                            icon: Icons.person_outline,
+                            icon: Icons.people_alt_outlined,
                             label: 'Passengers',
                             value: '$passengers Seats',
                           ),
@@ -357,7 +407,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   PrimaryButton(
                     label: 'Search Buses',
                     onPressed: origin != destination
@@ -404,22 +454,38 @@ class _RouteRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Row(
-        children: [
-          Icon(Icons.location_on, color: leadingColor, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: AppTextStyles.subtitle),
-                Text(value, style: AppTextStyles.label.copyWith(fontSize: 15)),
-              ],
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: leadingColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.location_on_rounded, color: leadingColor, size: 18),
             ),
-          ),
-          if (trailing != null) trailing!,
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.captionSmall.copyWith(color: AppColors.textMuted)),
+                  const SizedBox(height: 2),
+                  Text(value, style: AppTextStyles.bodyBold.copyWith(fontSize: 16)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 22),
+            if (trailing != null) ...[
+              const SizedBox(width: 6),
+              trailing!,
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -439,22 +505,43 @@ class _MiniInfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.chipFill,
-        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.surfaceVariant, AppColors.chipPrimary],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.textSecondary),
-          const SizedBox(width: 8),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.06),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 16, color: AppColors.primary),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(label, style: AppTextStyles.captionSmall.copyWith(fontSize: 11)),
+                const SizedBox(height: 2),
                 Text(value,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    style: AppTextStyles.labelSection.copyWith(fontSize: 13, color: AppColors.textPrimary)),
               ],
             ),
           ),
@@ -474,54 +561,108 @@ class _PopularRouteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(22),
       child: Container(
-        width: 170,
+        width: 190,
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(18),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: AppColors.borderLight),
+          boxShadow: AppShadows.sm,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 100,
+              height: 88,
               width: double.infinity,
-              color: AppColors.chipFill,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.primary.withValues(alpha: 0.08), AppColors.chipGold],
+                ),
+              ),
               alignment: Alignment.center,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.directions_bus, color: AppColors.textSecondary, size: 28),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.directions_bus_rounded, color: AppColors.primary, size: 22),
+                  ),
                   const SizedBox(height: 6),
-                  Text(trip.agencyName, style: AppTextStyles.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(trip.agencyName, style: AppTextStyles.captionSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${trip.origin} → ${trip.destination}',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${formatDate(trip.departureAt)} · ${trip.departureTime}',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Expanded(
+                        child: Text(trip.origin,
+                            style: AppTextStyles.bodyBold.copyWith(fontSize: 14),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.arrow_right_alt_rounded, color: AppColors.secondary, size: 18),
+                      ),
+                      Expanded(
+                        child: Text(trip.destination,
+                            style: AppTextStyles.bodyBold.copyWith(fontSize: 14),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.right),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(formatFcfa(trip.priceFcfa),
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.schedule_rounded, color: AppColors.textMuted, size: 13),
+                      const SizedBox(width: 4),
+                      Text(formatDate(trip.departureAt),
+                          style: AppTextStyles.captionSmall),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(trip.departureTime,
+                      style: AppTextStyles.captionSmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.secondary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(formatFcfa(trip.priceFcfa),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryDark)),
+                  ),
                 ],
               ),
             ),
