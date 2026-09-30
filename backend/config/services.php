@@ -18,6 +18,17 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
+    /*
+    | AI Assistant — any OpenAI-compatible chat-completions endpoint
+    | (OpenAI itself, or a compatible provider). Leave AI_API_KEY empty
+    | to keep the assistant disabled without breaking the rest of the app.
+    */
+    'ai' => [
+        'key' => env('AI_API_KEY'),
+        'base_url' => env('AI_API_BASE_URL', 'https://api.openai.com/v1'),
+        'model' => env('AI_MODEL', 'gpt-4o-mini'),
+    ],
+
     'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],

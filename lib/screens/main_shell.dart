@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import 'home_search_screen.dart';
 import 'my_bookings_screen.dart';
+import 'assistant_screen.dart';
 import 'notifications_screen.dart';
 import 'account_screen.dart';
 import 'admin_dashboard_screen.dart';
@@ -39,6 +40,7 @@ class _MainShellState extends State<MainShell> {
   static const _tabs = [
     HomeSearchScreen(),
     MyBookingsScreen(),
+    AssistantScreen(),
     NotificationsScreen(),
     AccountScreen(),
   ];
@@ -77,6 +79,11 @@ class _MainShellState extends State<MainShell> {
                 icon: Icon(Icons.confirmation_number_outlined),
                 selectedIcon: Icon(Icons.confirmation_num_rounded),
                 label: 'Bookings',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.smart_toy_outlined),
+                selectedIcon: Icon(Icons.smart_toy_rounded),
+                label: 'Assistant',
               ),
               NavigationDestination(
                 icon: Icon(Icons.notifications_none_rounded),
