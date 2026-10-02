@@ -23,23 +23,24 @@ class BookingService {
     return ApiBooking.fromJson(json as Map<String, dynamic>);
   }
 
+  /// Starts the Mobile Money charge. Resolves instantly to 'success' when
+  /// the backend is in simulation mode (the default — see
+  /// PAYMENT_SIMULATION_MODE on the backend); against a real MTN MoMo
+  /// (direct phone prompt) or Orange Money (returns [ApiPayment.redirectUrl]
+  /// to open) integration it comes back 'pending' and the caller should
+  /// poll [checkPaymentStatus] until it resolves.
   Future<ApiPayment> initiatePayment(int bookingId, {String provider = 'mtn_momo'}) async {
     final json = await _client.post('/bookings/$bookingId/pay', {'provider': provider});
     return ApiPayment.fromJson(json as Map<String, dynamic>);
   }
 
-  /// There is no live MTN MoMo / Orange Money integration yet — production
-  /// payment confirmation is meant to arrive at POST /payments/webhook from
-  /// the provider itself (see PaymentController::handleWebhook on the
-  /// backend). Until that integration exists, the app calls the same public
-  /// webhook endpoint directly to simulate a successful charge, so the rest
-  /// of the booking flow (ticket issuance, seat becoming "booked") can be
-  /// exercised end to end. Remove this the moment a real gateway is wired up.
-  Future<void> simulateProviderConfirmation(String transactionRef) async {
-    await _client.post('/payments/webhook', {
-      'transaction_ref': transactionRef,
-      'status': 'success',
-    });
+  /// Polls the booking's current status, reconciling against the payment
+  /// provider if still pending. Returns the booking's status string
+  /// ('pending' | 'confirmed' | 'cancelled') — 'confirmed' means payment
+  /// succeeded and the ticket is ready.
+  Future<ApiBooking> checkPaymentStatus(int bookingId) async {
+    final json = await _client.get('/bookings/$bookingId/payment-status');
+    return ApiBooking.fromJson(json as Map<String, dynamic>);
   }
 
   Future<ApiTicket> getTicket(int bookingId) async {

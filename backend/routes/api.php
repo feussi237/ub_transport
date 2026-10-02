@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'role:'.Role::PASSENGER])->group(function () 
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
     Route::post('/bookings/{booking}/pay', [PaymentController::class, 'initiate']);
+    Route::get('/bookings/{booking}/payment-status', [PaymentController::class, 'status']);
 
     Route::post('/agencies/{agency}/reviews', [ReviewController::class, 'store']);
 });

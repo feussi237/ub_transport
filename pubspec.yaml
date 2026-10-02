@@ -45,6 +45,8 @@ dependencies:
   mobile_scanner: ^5.0.0
   # Lets a passenger save/share their ticket QR code as an image.
   share_plus: ^7.0.0
+  # Opens the Orange Money checkout page (a redirect-based payment flow).
+  url_launcher: ^6.0.0
 
 dev_dependencies:
   flutter_test:

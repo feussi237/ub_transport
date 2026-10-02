@@ -18,6 +18,7 @@ class Payment extends Model
         'amount',
         'status',
         'transaction_ref',
+        'provider_reference',
         'paid_at',
     ];
 

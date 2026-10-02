@@ -167,15 +167,29 @@ class ApiPayment {
   final int id;
   final int bookingId;
   final String transactionRef;
-  final String status;
+  final String status; // pending | success | failed | refunded
 
-  ApiPayment({required this.id, required this.bookingId, required this.transactionRef, required this.status});
+  /// Only set for a redirect-based provider (Orange Money) — the client
+  /// must open this URL for the passenger to authorize the charge.
+  final String? redirectUrl;
+  final String? providerMessage;
+
+  ApiPayment({
+    required this.id,
+    required this.bookingId,
+    required this.transactionRef,
+    required this.status,
+    this.redirectUrl,
+    this.providerMessage,
+  });
 
   factory ApiPayment.fromJson(Map<String, dynamic> json) => ApiPayment(
         id: json['id'] as int,
         bookingId: json['booking_id'] as int,
         transactionRef: json['transaction_ref'] as String,
         status: json['status'] as String,
+        redirectUrl: json['redirect_url'] as String?,
+        providerMessage: json['provider_message'] as String?,
       );
 }
 

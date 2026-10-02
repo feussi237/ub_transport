@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Ticket;
 use App\Models\TripSeat;
+use App\Services\Payments\PaymentGatewayFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,13 +17,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class PaymentController extends Controller
 {
     /**
-     * Starts a Mobile Money payment for a pending booking.
-     *
-     * This creates the pending Payment row and, in production, would call out to the
-     * MTN MoMo / Orange Money collection API here and return their redirect/USSD
-     * prompt reference. That provider call is not wired up in this scaffold — swap
-     * the TODO below for the real SDK/HTTP call, then let handleWebhook() below
-     * reconcile the result instead of trusting the client.
+     * Starts a Mobile Money payment for a pending booking. Resolves to a
+     * real gateway (MTN MoMo / Orange Money) or the simulation gateway
+     * depending on configuration — see PaymentGatewayFactory. A push-based
+     * provider leaves the payment "pending" until the payer approves on
+     * their phone; the simulation gateway confirms immediately.
      */
     public function initiate(Request $request, Booking $booking)
     {
@@ -44,11 +43,49 @@ class PaymentController extends Controller
             'transaction_ref' => (string) Str::uuid(),
         ]);
 
-        // TODO: call the MTN MoMo / Orange Money collection API with $payment->transaction_ref
-        // as the external reference, then return here. Do not confirm the booking yet —
-        // that happens in handleWebhook() once the provider confirms the charge.
+        $gateway = PaymentGatewayFactory::for($data['provider']);
+        $result = $gateway->requestToPay($payment, $request->user()->phone);
 
-        return response()->json($payment, 201);
+        $payment->update(['provider_reference' => $result['provider_reference'] ?? null]);
+
+        if ($result['status'] === 'success') {
+            $this->reconcile($payment, 'success');
+        } elseif ($result['status'] === 'failed') {
+            $payment->update(['status' => Payment::STATUS_FAILED]);
+        }
+
+        return response()->json([
+            ...$payment->fresh()->toArray(),
+            'redirect_url' => $result['redirect_url'] ?? null,
+            'provider_message' => $result['message'] ?? null,
+        ], 201);
+    }
+
+    /**
+     * The client polls this after initiate() for a push/redirect-based
+     * provider, since webhook delivery can't be relied on outside a public
+     * production URL. Reconciles against the provider's own status check.
+     */
+    public function status(Request $request, Booking $booking)
+    {
+        $this->authorizeOwner($request, $booking);
+
+        $payment = $booking->payments()->latest()->first();
+
+        if (! $payment) {
+            throw new HttpException(404, 'No payment found for this booking.');
+        }
+
+        if ($payment->status === Payment::STATUS_PENDING) {
+            $gateway = PaymentGatewayFactory::for($payment->provider);
+            $result = $gateway->checkStatus($payment);
+
+            if (in_array($result['status'], ['success', 'failed'], true)) {
+                $this->reconcile($payment, $result['status']);
+            }
+        }
+
+        return $booking->fresh(['trip.agency', 'tripSeat.seat', 'ticket', 'payments']);
     }
 
     /**
@@ -68,24 +105,35 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Already processed.']);
         }
 
-        DB::transaction(function () use ($payment, $data) {
-            $payment->update(['status' => $data['status'], 'paid_at' => now()]);
+        $this->reconcile($payment, $data['status']);
 
-            if ($data['status'] !== 'success') {
+        return response()->json(['message' => 'Payment reconciled.']);
+    }
+
+    /** Shared by initiate() (simulation's instant result), status() (polling a real gateway), and the webhook. */
+    private function reconcile(Payment $payment, string $status): void
+    {
+        DB::transaction(function () use ($payment, $status) {
+            $payment->update(['status' => $status, 'paid_at' => $status === 'success' ? now() : null]);
+
+            if ($status !== 'success') {
                 return;
             }
 
             $booking = $payment->booking;
+
+            if ($booking->status === Booking::STATUS_CONFIRMED) {
+                return;
+            }
+
             $booking->update(['status' => Booking::STATUS_CONFIRMED]);
             $booking->tripSeat->update(['status' => TripSeat::STATUS_BOOKED, 'locked_until' => null]);
 
-            Ticket::create([
-                'booking_id' => $booking->id,
-                'qr_code' => (string) Str::uuid(),
-            ]);
+            Ticket::firstOrCreate(
+                ['booking_id' => $booking->id],
+                ['qr_code' => (string) Str::uuid()]
+            );
         });
-
-        return response()->json(['message' => 'Payment reconciled.']);
     }
 
     private function authorizeOwner(Request $request, Booking $booking): void

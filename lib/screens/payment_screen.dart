@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../models/api_models.dart';
@@ -29,6 +30,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   PaymentMethod _method = PaymentMethod.mtnMomo;
   bool _isProcessing = false;
   String? _error;
+  String? _waitingMessage;
+  String? _redirectUrl;
+  List<ApiBooking>? _awaitingBookings;
 
   late Future<List<ApiBooking>> _bookingsFuture;
 
@@ -63,28 +67,42 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() {
       _isProcessing = true;
       _error = null;
+      _waitingMessage = null;
+      _redirectUrl = null;
     });
     try {
       final provider = _method == PaymentMethod.mtnMomo ? 'mtn_momo' : 'orange_money';
+      final payments = <ApiPayment>[];
       for (final booking in bookings) {
-        final payment = await _bookings.initiatePayment(booking.id, provider: provider);
-        await _bookings.simulateProviderConfirmation(payment.transactionRef);
+        payments.add(await _bookings.initiatePayment(booking.id, provider: provider));
       }
-      final tickets = <ApiTicket>[];
-      for (final booking in bookings) {
-        tickets.add(await _bookings.getTicket(booking.id));
+
+      final failed = payments.where((p) => p.status == 'failed').toList();
+      if (failed.isNotEmpty) {
+        setState(() => _error = failed.first.providerMessage ?? 'Payment was declined. Please try again.');
+        return;
       }
-      if (!mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => BookingConfirmationScreen(
-            trip: widget.trip,
-            passengers: widget.passengers,
-            tickets: tickets,
-            totalFcfa: _total,
-          ),
-        ),
-      );
+
+      if (payments.every((p) => p.status == 'success')) {
+        // Simulation mode (or an instant-confirm provider) already settled it.
+        await _finishWithTickets(bookings);
+        return;
+      }
+
+      // A real gateway leaves this pending until the payer approves.
+      final redirect = payments.map((p) => p.redirectUrl).firstWhere((u) => u != null, orElse: () => null);
+      setState(() {
+        _awaitingBookings = bookings;
+        _redirectUrl = redirect;
+        _waitingMessage = redirect != null
+            ? 'Open Orange Money to approve the payment, then come back and tap "I\'ve paid".'
+            : 'Check your phone and approve the MTN MoMo prompt…';
+      });
+
+      if (redirect == null) {
+        // MTN-style push: poll automatically, no extra tap needed.
+        await _pollUntilResolved(bookings);
+      }
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
@@ -92,6 +110,66 @@ class _PaymentScreenState extends State<PaymentScreen> {
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
+  }
+
+  Future<void> _openRedirectAndPoll() async {
+    final url = _redirectUrl;
+    final bookings = _awaitingBookings;
+    if (url == null || bookings == null) return;
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _confirmAfterRedirect() async {
+    final bookings = _awaitingBookings;
+    if (bookings == null) return;
+    setState(() {
+      _isProcessing = true;
+      _error = null;
+    });
+    try {
+      await _pollUntilResolved(bookings, attempts: 1);
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  /// Polls GET /bookings/{id}/payment-status every few seconds until every
+  /// booking in the group is confirmed (or [attempts] is exhausted).
+  Future<void> _pollUntilResolved(List<ApiBooking> bookings, {int attempts = 20}) async {
+    for (var i = 0; i < attempts; i++) {
+      if (i > 0) await Future.delayed(const Duration(seconds: 3));
+      final results = await Future.wait(bookings.map((b) => _bookings.checkPaymentStatus(b.id)));
+
+      if (results.any((b) => b.status == 'cancelled')) {
+        if (mounted) setState(() => _error = 'The payment was not completed and the booking expired.');
+        return;
+      }
+      if (results.every((b) => b.status == 'confirmed')) {
+        await _finishWithTickets(bookings);
+        return;
+      }
+    }
+    if (mounted) {
+      setState(() => _waitingMessage = 'Still waiting for confirmation — tap the button again in a moment.');
+    }
+  }
+
+  Future<void> _finishWithTickets(List<ApiBooking> bookings) async {
+    final tickets = <ApiTicket>[];
+    for (final booking in bookings) {
+      tickets.add(await _bookings.getTicket(booking.id));
+    }
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BookingConfirmationScreen(
+          trip: widget.trip,
+          passengers: widget.passengers,
+          tickets: tickets,
+          totalFcfa: _total,
+        ),
+      ),
+    );
   }
 
   @override
@@ -224,11 +302,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   const SizedBox(height: 14),
                   Text(_error!, style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600)),
                 ],
+                if (_waitingMessage != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: AppColors.chipFill, borderRadius: BorderRadius.circular(14)),
+                    child: Row(
+                      children: [
+                        if (_isProcessing)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 12),
+                            child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                        Expanded(child: Text(_waitingMessage!, style: AppTextStyles.subtitle)),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
-                PrimaryButton(
-                  label: _isProcessing ? 'Processing…' : 'Pay ${formatFcfa(_total)} Now',
-                  onPressed: _isProcessing ? null : () => _pay(bookings),
-                ),
+                if (_redirectUrl != null) ...[
+                  PrimaryButton(label: 'Open Orange Money', onPressed: _openRedirectAndPoll),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: _isProcessing ? null : _confirmAfterRedirect,
+                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                    child: const Text("I've paid"),
+                  ),
+                ] else
+                  PrimaryButton(
+                    label: _isProcessing ? 'Processing…' : 'Pay ${formatFcfa(_total)} Now',
+                    onPressed: _isProcessing ? null : () => _pay(bookings),
+                  ),
               ],
             ),
           );
